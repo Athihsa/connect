@@ -1,5 +1,3 @@
-# connect
-
 Sailors Database: (sailor:table -----> M:N)
 
 create table sailor(sid int primary key, sname varchar(20), rating int, age int);
@@ -41,3 +39,55 @@ bid));
             from reserves r where r.bid=old.bid); if num_reservations>0 then signal sqlstate '45000' set message_text = 'Cannot delete boats with active  reservations!'; end if; end;$
 
  To show if the trigger is working ---> delete from boat where bid=105;
+
+
+
+
+
+
+
+Insurance Database:person--->owns--->car:1:N    person--->participate--->car--->accident: 1:1:1
+
+create table person(driverid varchar(20) primary key, name varchar(20), address varchar(40));
+create table car(regno varchar(20) primary key, model varchar(20), year int);
+create table accident(reportno int primary key, accidate date, location varchar(40));
+create table owns(driverid varchar(20), regno varchar(20), foreign key(driverid) references person(driverid),foreign key(regno) references car(regno));
+create table participated(driverid varchar(20), regno varchar(20), reportno int, amt int, foreign key(driverid) references person(driverid),
+foreign key(regno) references car(regno), foreign key(reportno) references accident(reportno));
+
+insert into person values('a01', 'Smith', 'London'),('a02','Ramesh','Kuvempunagar'),('a03','Srujan','Shivnagar'),('a04','Dhruvanth','KR Nagar'),('a05','Gopal','Siddarth Layout');
+ insert into car values('KA09MA1231','Mazda',2020),('KA09MA1232','Wagnor',2012),('KA09MA1233','Santro',2010),('KA09MA1234','Benz',2015),('KA09MA1235','Swift Desire',2023);
+insert into owns values('a01','KA09MA1231'),('a02','KA09MA1232'),('a03','KA09MA1233'),('a04','KA09MA1234'),('a05','KA09MA1235'),('a01','KA09MA1231');
+insert into accident values(101, "2021-09-09",'Agra'),(102,"2022-12-12",'Ahmedabad'),(103,"2023-02-02","Banglore");
+insert into participated values('a01','KA09MA1231',101,100000),('a03','KA09MA1233',103,30000),('a01','KA09MA1231',102,500000),('a01','KA09MA1231',103,90000);
+
+1.  Find the total number of people who owned cars that were involved in accidents in 2021. 
+
+           select count(distinct o.driverid) from owns o join participated p on p.driverid=o.driverid and p.regno=o.regno join accident a on a.reportno=p.reportno where year(a.accidate)=2023;
+
+2.  Find the number of accidents in which the cars belonging to “Smith” were involved.  
+         select count(distinct pa.reportno) from owns o join participated pa on pa.regno=o.regno and pa.driverid=o.driverid join person p on p.driverid=o.driverid where p.name='Smith';
+
+3.  Add a new accident to the database; assume any values for required attributes. 
+         insert into accident values(104,"2022-02-26","Sigandur");
+
+4. Delete the Mazda belonging to “Smith”.  
+           delete from owns where driverid in (select p.driverid from person p where name='Smith') and regno in (select regno from car where model='Mazda');
+
+5. Update the damage amount for the car with license number “KA09MA1234” in the accident with report. 
+           update participated set amt=50000 where regno='KA09MA1234' and reportno=103;
+
+6. A view that shows models and year of cars that are involved in accident:
+CREATE VIEW car_involved_in_accident AS
+SELECT model, year
+FROM car
+JOIN participated p ON car.regno = p.regno;
+
+7. A trigger that prevents a driver from participating in more than 3 accidents in a given year.
+CREATE TRIGGER limit_accident
+BEFORE INSERT ON participated
+FOR EACH ROW
+BEGIN
+IF (SELECT COUNT(*) FROM participated WHERE driverid = NEW.driverid AND YEAR(accidate) = YEAR(CURRENT_DATE)) >= 3 THEN SIGNAL SQLSTATE ‘45000’ SET MESSAGE_TEXT = ‘Driver has exceeded the limit of accidents in a year’;
+END IF;
+END;
