@@ -14,29 +14,30 @@ Queries:
 1. Find the colours of boats reserved by Albert:
          select color from boat b, sailor s, reserves r where s.sid=r.sid and b.bid=r.bid and s.sname='Albert';
 
-2.       Find all sailor id’s of sailors who have a rating of at least 8 or reserved boat 103.
+2. Find all sailor id’s of sailors who have a rating of at least 8 or reserved boat 103.
            (select s.sid from sailor s where s.rating>=8) UNION ( select sid from reserves r where bid=103);
 
-3.       Find the names of sailors who have not reserved a boat whose name contains the string “storm”. Order the names in ascending order.
+3. Find the names of sailors who have not reserved a boat whose name contains the string “storm”. Order the names in ascending order.
            select s.sname from sailor s where s.sid not in (select r.sid from reserves r where r.bid in(select b.bid from boat b where b.bname like "%St
 orm%")) Order by s.sname;
 
-4.       Find the names of sailors who have reserved all boats.
+4. Find the names of sailors who have reserved all boats.
            select s.sname from sailor s where not exists( select * from boat b where not exists( select * from reserves r where s.sid=r.sid and b.bid=r.
 bid));
 
-5.       Find the name and age of the oldest sailor.
+5. Find the name and age of the oldest sailor.
              select s.sname, s.age from sailor s where s.age in (select max(s.age) from sailor s);
 
-6.       For each boat which was reserved by at least 5 sailors with age >= 40, find the boat id and the average age of such sailors.
+6. For each boat which was reserved by at least 5 sailors with age >= 40, find the boat id and the average age of such sailors.
             select b.bid, avg(s.age) from sailor s, boat b, reserves r where r.sid=s.sid and b.bid=r.bid and s.age>=40 group by(r.bid) having count(distinct r.sid>=5);
 
-7.   Create a view that shows the names and colours of all the boats that have been reserved by a sailor with a specific rating.
+7. Create a view that shows the names and colours of all the boats that have been reserved by a sailor with a specific rating.
              create view sailors_with_specific_rating as select b.bname, b.color from boat b, sailor s, reserves r where r.sid=s.sid and r.bid=b.bid and s
 .rating=9;
 
-8.     A trigger that prevents boats from being deleted If they have active reservations.
+8. A trigger that prevents boats from being deleted If they have active reservations.
             delimiter $ 
-create trigger prevent_deletion_of_boats before delete on boat for each row begin declare num_reservations int; set num_reservations=(Select count(*) from reserves r where r.bid=old.bid); if num_reservations>0 then signal sqlstate '45000' set message_text = 'Cannot delete boats with active reservations!'; end if; end;$
+            create trigger prevent_deletion_of_boats before delete on boat for each row begin declare num_reservations int; set num_reservations=(Select count(*) 
+            from reserves r where r.bid=old.bid); if num_reservations>0 then signal sqlstate '45000' set message_text = 'Cannot delete boats with active  reservations!'; end if; end;$
 
-delete from boat where bid=105;
+ To show if the trigger is working ---> delete from boat where bid=105;
