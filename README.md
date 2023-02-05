@@ -61,33 +61,23 @@ insert into owns values('a01','KA09MA1231'),('a02','KA09MA1232'),('a03','KA09MA1
 insert into accident values(101, "2021-09-09",'Agra'),(102,"2022-12-12",'Ahmedabad'),(103,"2023-02-02","Banglore");
 insert into participated values('a01','KA09MA1231',101,100000),('a03','KA09MA1233',103,30000),('a01','KA09MA1231',102,500000),('a01','KA09MA1231',103,90000);
 
-1.  Find the total number of people who owned cars that were involved in accidents in 2021. 
-
-           select count(distinct o.driverid) from owns o join participated p on p.driverid=o.driverid and p.regno=o.regno join accident a on a.reportno=p.reportno where year(a.accidate)=2023;
+1. Find the total number of people who owned cars that were involved in accidents in 2021. 
+      select count(distinct o.driverid) from owns o join participated p on p.driverid=o.driverid and p.regno=o.regno join accident a on a.reportno=p.reportno where year(a.accidate)=2023;
 
 2.  Find the number of accidents in which the cars belonging to “Smith” were involved.  
          select count(distinct pa.reportno) from owns o join participated pa on pa.regno=o.regno and pa.driverid=o.driverid join person p on p.driverid=o.driverid where p.name='Smith';
 
 3.  Add a new accident to the database; assume any values for required attributes. 
-         insert into accident values(104,"2022-02-26","Sigandur");
+     insert into accident values(104,"2022-02-26","Sigandur");
 
 4. Delete the Mazda belonging to “Smith”.  
-           delete from owns where driverid in (select p.driverid from person p where name='Smith') and regno in (select regno from car where model='Mazda');
+    delete from owns where driverid in (select p.driverid from person p where name='Smith') and regno in (select regno from car where model='Mazda');
 
 5. Update the damage amount for the car with license number “KA09MA1234” in the accident with report. 
-           update participated set amt=50000 where regno='KA09MA1234' and reportno=103;
+       update participated set amt=50000 where regno='KA09MA1234' and reportno=103;
 
 6. A view that shows models and year of cars that are involved in accident:
-CREATE VIEW car_involved_in_accident AS
-SELECT model, year
-FROM car
-JOIN participated p ON car.regno = p.regno;
+     CREATE VIEW car_involved_in_accident AS SELECT model, year FROM car JOIN participated p ON car.regno = p.regno;
 
 7. A trigger that prevents a driver from participating in more than 3 accidents in a given year.
-CREATE TRIGGER limit_accident
-BEFORE INSERT ON participated
-FOR EACH ROW
-BEGIN
-IF (SELECT COUNT(*) FROM participated WHERE driverid = NEW.driverid AND YEAR(accidate) = YEAR(CURRENT_DATE)) >= 3 THEN SIGNAL SQLSTATE ‘45000’ SET MESSAGE_TEXT = ‘Driver has exceeded the limit of accidents in a year’;
-END IF;
-END;
+     CREATE TRIGGER limit_accident BEFORE INSERT ON participated FOR EACH ROW BEGIN IF (SELECT COUNT(*) FROM participated WHERE driverid = NEW.driverid AND YEAR(accidate) = YEAR(CURRENT_DATE)) >= 3 THEN SIGNAL SQLSTATE ‘45000’ SET MESSAGE_TEXT = ‘Driver has exceeded the limit of accidents in a year’; END IF; END;
